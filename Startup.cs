@@ -1,4 +1,4 @@
-using DatingApp.Api.Data;
+using api.Data;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -24,13 +24,16 @@ namespace DatingApp.Api
             services.AddDbContext<DataContext>(x => x.UseSqlite(Configuration.GetConnectionString("DefaultConnection")));
             services.AddControllers();
 
-            services.AddCors(options =>{
+            services.AddCors(options =>
+            {
                 options.AddDefaultPolicy(builder =>
                     builder.SetIsOriginAllowed(_ => true)
                     .AllowAnyMethod()
                     .AllowAnyHeader()
                     .AllowCredentials());
             });
+
+            services.AddScoped<IAuthRepository, AuthRepository>();
 
         }
 
