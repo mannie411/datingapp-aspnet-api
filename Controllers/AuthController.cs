@@ -24,7 +24,8 @@ namespace api.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] UserForRegisterDto userForRegisterDto)
         {
-            userForRegisterDto.Username = userForRegisterDto.Username.ToLower();
+            if (!string.IsNullOrEmpty(userForRegisterDto.Username))
+                userForRegisterDto.Username = userForRegisterDto.Username.ToLower();
 
             if (await _repo.UserExist(userForRegisterDto.Username))
                 // return BadRequest("Username is already taken");
@@ -48,6 +49,8 @@ namespace api.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] UserForLoginDto userForLoginDto)
         {
+            throw new Exception("Error");
+
             var userForLogin = await _repo.Login(userForLoginDto.Username.ToLower(), userForLoginDto.Password);
 
             if (userForLogin == null)
