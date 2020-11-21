@@ -5,11 +5,15 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
+using System;
 using System.Net;
 using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using api.Infrastructure;
 using api.Helpers;
+using AutoMapper;
 
 namespace DatingApp.Api
 {
@@ -25,9 +29,34 @@ namespace DatingApp.Api
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddDbContext<DataContext>(x => x.UseSqlite(Configuration.GetConnectionString("DefaultConnection")));
-            services.AddControllers();
+            var jwtTokenConfig = Configuration.GetSection("jwtTokenConfig").Get<JwtTokenConfig>();
+            services.AddSingleton(jwtTokenConfig);
+            services.AddAuthentication(x =>
+         {
+             x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+             x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+         }).AddJwtBearer(x =>
+         {
+             x.RequireHttpsMetadata = true;
+             x.SaveToken = true;
+             x.TokenValidationParameters = new TokenValidationParameters
+             {
+                 ValidateIssuer = true,
+                 ValidIssuer = jwtTokenConfig.Issuer,
+                 ValidateIssuerSigningKey = true,
+                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(jwtTokenConfig.Secret)),
+                 ValidAudience = jwtTokenConfig.Audience,
+                 ValidateAudience = true,
+                 ValidateLifetime = true,
+                 ClockSkew = TimeSpan.FromMinutes(1)
+             };
+         });
 
+            services.AddDbContext<DataContext>(x => x.UseSqlite(Configuration.GetConnectionString("DefaultConnection")));
+            services.AddTransient<Seed>();
+            services.AddControllers().AddNewtonsoftJson(options =>
+                options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
+            );
             services.AddCors(options =>
             {
                 options.AddDefaultPolicy(builder =>
@@ -36,13 +65,14 @@ namespace DatingApp.Api
                     .AllowAnyHeader()
                     .AllowCredentials());
             });
-
+            services.AddAutoMapper(typeof(Startup));
             services.AddScoped<IAuthRepository, AuthRepository>();
+            services.AddScoped<IDatingRepository, DatingRepository>();
 
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, Seed seeder)
         {
             if (env.IsDevelopment())
             {
@@ -67,16 +97,16 @@ namespace DatingApp.Api
             }
 
             // app.UseHttpsRedirection();
-            app.UseCors(x => x.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());
-
             app.UseRouting();
-
+            app.UseCors("AllowAll");
+            app.UseAuthentication();
             app.UseAuthorization();
-
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
             });
+
+            // seeder.SeedUsers();
         }
     }
 }

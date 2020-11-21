@@ -9,6 +9,7 @@ namespace api.Data
         { }
         public DbSet<Value> Datas { get; set; }
         public DbSet<User> Users { get; set; }
+        public DbSet<Photo> Photos { get; set; }
 
     }
 }

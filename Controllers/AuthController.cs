@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using System;
+using api.Infrastructure;
+using Microsoft.Extensions.Logging;
 
 namespace api.Controllers
 {
@@ -15,9 +17,15 @@ namespace api.Controllers
     public class AuthController : Controller
     {
         private readonly IAuthRepository _repo;
-        public AuthController(IAuthRepository repo)
+        private readonly JwtTokenConfig _jwtTokenConfig;
+        private readonly byte[] _secret;
+
+        public AuthController(IAuthRepository repo, JwtTokenConfig jwtTokenConfig)
         {
+
+            _jwtTokenConfig = jwtTokenConfig;
             _repo = repo;
+            _secret = Encoding.ASCII.GetBytes(jwtTokenConfig.Secret);
 
         }
 
@@ -49,7 +57,7 @@ namespace api.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] UserForLoginDto userForLoginDto)
         {
-            throw new Exception("Error");
+            // throw new Exception("Error");
 
             var userForLogin = await _repo.Login(userForLoginDto.Username.ToLower(), userForLoginDto.Password);
 
@@ -58,21 +66,35 @@ namespace api.Controllers
 
             // Generate token
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes("datingapp secret key");
-            var tokenDescriptor = new SecurityTokenDescriptor
-            {
-                Subject = new ClaimsIdentity(new Claim[] {
+            // var key = Encoding.ASCII.GetBytes("datingapp secret key");
+            // var tokenDescriptor = new SecurityTokenDescriptor
+            // {
+            //     Subject = new ClaimsIdentity(new Claim[] {
+            //         new Claim(ClaimTypes.NameIdentifier, userForLogin.Id.ToString()),
+            //         new Claim(ClaimTypes.Name, userForLogin.Username) }),
+            //     Expires = DateTime.UtcNow.AddDays(7),
+            //     SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key),
+            //         SecurityAlgorithms.HmacSha512Signature)
+            // };
+
+            var claims = new Claim[] {
                     new Claim(ClaimTypes.NameIdentifier, userForLogin.Id.ToString()),
-                    new Claim(ClaimTypes.Name, userForLogin.Username) }),
-                Expires = DateTime.UtcNow.AddDays(7),
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key),
-                    SecurityAlgorithms.HmacSha512Signature)
-            };
+                    new Claim(ClaimTypes.Name, userForLogin.Username) };
 
-            var token = tokenHandler.CreateToken(tokenDescriptor);
-            var tokenString = tokenHandler.WriteToken(token);
+            var jwtToken = new JwtSecurityToken(
+                    _jwtTokenConfig.Issuer,
+                    _jwtTokenConfig.Audience,
+                    claims,
+                    expires: DateTime.UtcNow.AddDays(_jwtTokenConfig.AccessTokenExpiration),
+                    signingCredentials: new SigningCredentials(
+                                        new SymmetricSecurityKey(_secret),
+                                                SecurityAlgorithms.HmacSha256Signature)
+            );
 
-            return Ok(new { tokenString });
+            // var token = tokenHandler.CreateToken(tokenDescriptor);
+            var token = tokenHandler.WriteToken(jwtToken);
+
+            return Ok(new { token });
 
 
         }

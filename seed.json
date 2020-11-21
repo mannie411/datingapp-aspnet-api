@@ -1,0 +1,76 @@
+[
+    {
+        'repeat(5)': {
+            Username: '{
+                {firstName("male")
+                }
+            }',
+            Gender: "Male",
+            DOB: '{
+                {moment(this.date(new Date(1970,
+                    0,
+                    1), new Date(1999,
+                    12,
+                    31).format("LLLL")
+                }
+            }',
+            Password: "password",
+            KnownAs: function() {return this.Username;
+            },
+            CreatedAt:'{
+                {moment(this.date(new Date(2014,
+                    0,
+                    1), new Date()).format("LLLL")
+                }
+            }', 
+            UpdatedAt: '{
+                {date(new Date(2014,
+                    0,
+                    1), new Date(),
+                    "YYYY-MM-DD")
+                moment(this.date(new Date(2014,
+                    0,
+                    1), new Date().format("LLLL")
+                }
+            }',
+            LastActive: function(){return this.UpdatedAt;
+            },
+            Introduction: '{
+                {lorem(1,
+                    "paragraphs")
+                }
+            }',
+            LookingFor: '{
+                {lorem(1,
+                    "paragraphs")
+                }
+            }',
+            Interests: '{
+                {lorem(1,
+                    "sentences")
+                }
+            }',
+         
+            City: '{
+                {city()
+                }
+            }',
+            Country: '{
+                {country()
+                }
+            }', 
+            Photos: [
+                {
+                    url: function(num){
+                        return 'https: //randomuser.me/api/portraits/women/' + num.integer(1, 100) + '.jpg';
+                    },
+                    isMain: true,
+                    Desc: '{
+                        {lorem()
+                        }
+                    }'
+                }
+            ]
+        }
+    }
+]
