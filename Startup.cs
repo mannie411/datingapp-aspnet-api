@@ -98,7 +98,11 @@ namespace DatingApp.Api
 
             // app.UseHttpsRedirection();
             app.UseRouting();
-            app.UseCors("AllowAll");
+            app.UseCors(x => x.AllowAnyHeader()
+                .AllowAnyMethod()
+                .SetIsOriginAllowed(origin => true)
+                .AllowCredentials()
+            );
             app.UseAuthentication();
             app.UseAuthorization();
             app.UseEndpoints(endpoints =>
