@@ -78,8 +78,8 @@ namespace api.Controllers
             // };
 
             var claims = new Claim[] {
-                    new Claim(ClaimTypes.NameIdentifier, userForLogin.Id.ToString()),
-                    new Claim(ClaimTypes.Name, userForLogin.Username) };
+                    new Claim(JwtRegisteredClaimNames.NameId, userForLogin.Id.ToString()),
+                    new Claim(JwtRegisteredClaimNames.UniqueName, userForLogin.Username) };
 
             var jwtToken = new JwtSecurityToken(
                     _jwtTokenConfig.Issuer,
@@ -88,7 +88,7 @@ namespace api.Controllers
                     expires: DateTime.UtcNow.AddDays(_jwtTokenConfig.AccessTokenExpiration),
                     signingCredentials: new SigningCredentials(
                                         new SymmetricSecurityKey(_secret),
-                                                SecurityAlgorithms.HmacSha256Signature)
+                                                SecurityAlgorithms.HmacSha512)
             );
 
             // var token = tokenHandler.CreateToken(tokenDescriptor);
