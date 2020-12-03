@@ -18,7 +18,7 @@ namespace api.Data
         {
             PasswordHasher<string> pw = new PasswordHasher<string>();
 
-            var user = await _context.Users.SingleOrDefaultAsync(x => x.Username == username);
+            var user = await _context.Users.Include(p => p.Photos).SingleOrDefaultAsync(x => x.Username == username);
 
             if (user == null)
                 return null;

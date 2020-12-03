@@ -10,6 +10,7 @@ using System.Security.Claims;
 using System;
 using api.Infrastructure;
 using Microsoft.Extensions.Logging;
+using AutoMapper;
 
 namespace api.Controllers
 {
@@ -19,10 +20,11 @@ namespace api.Controllers
         private readonly IAuthRepository _repo;
         private readonly JwtTokenConfig _jwtTokenConfig;
         private readonly byte[] _secret;
+        private readonly IMapper _mapper;
 
-        public AuthController(IAuthRepository repo, JwtTokenConfig jwtTokenConfig)
+        public AuthController(IAuthRepository repo, JwtTokenConfig jwtTokenConfig, IMapper mapper)
         {
-
+            _mapper = mapper;
             _jwtTokenConfig = jwtTokenConfig;
             _repo = repo;
             _secret = Encoding.ASCII.GetBytes(jwtTokenConfig.Secret);
@@ -44,14 +46,13 @@ namespace api.Controllers
                 return BadRequest(ModelState);
 
 
-            var userToCreate = new User
-            {
-                Username = userForRegisterDto.Username
-            };
+            var userToCreate = _mapper.Map<User>(userForRegisterDto);
 
             var createUser = await _repo.Register(userToCreate, userForRegisterDto.Password);
 
-            return StatusCode(201);
+            var returnUser = _mapper.Map<UserForDetailDto>(createUser);
+
+            return CreatedAtRoute("getuser", new { controller = "Users", id = createUser.Id }, returnUser);
         }
 
         [HttpPost("login")]
@@ -93,8 +94,9 @@ namespace api.Controllers
 
             // var token = tokenHandler.CreateToken(tokenDescriptor);
             var token = tokenHandler.WriteToken(jwtToken);
+            var user = _mapper.Map<UserForListDto>(userForLogin);
 
-            return Ok(new { token });
+            return Ok(new { token, user });
 
 
         }

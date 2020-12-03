@@ -33,7 +33,7 @@ namespace api.Controllers
             var mapUsers = _mapper.Map<IEnumerable<UserForListDto>>(users);
             return Ok(mapUsers);
         }
-        [HttpGet("{id}")]
+        [HttpGet("{id}", Name = "getuser")]
         [Authorize]
         public async Task<IActionResult> GetUser(int id)
         {
