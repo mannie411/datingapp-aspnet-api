@@ -1,6 +1,8 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using api.Helpers;
 using api.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -50,16 +52,28 @@ namespace api.Data
 
         }
 
-        public async Task<IEnumerable<User>> GetUsers()
+        public async Task<PagedList<User>> GetUsers(UserParams userParams)
         {
-            var users = await _context.Users.Include(f => f.Photos)
-                                .ToListAsync();
-            return users;
+            var users = _context.Users.Include(f => f.Photos).AsQueryable();
+
+            users = users.Where(u => u.Id != userParams.UserId)
+                            .Where(g => g.Gender == userParams.Gender);
+                            
+            if (userParams.MinAge != 18 || userParams.MaxAge != 99)
+            {
+                var minDob = DateTime.Today.AddYears(-userParams.MaxAge - 1);
+                var maxDob = DateTime.Today.AddYears(-userParams.MinAge);
+
+                users = users.Where(u => u.DOB >= minDob && u.DOB <= maxDob);
+            }
+
+            return await PagedList<User>.CreateAsync(users, userParams.PageNumber, userParams.PageSize);
         }
 
         public async Task<bool> SaveAll()
         {
             return await _context.SaveChangesAsync() > 0;
         }
+
     }
 }
