@@ -14,5 +14,6 @@ namespace api.Data
         Task<User> GetUser(int id);
         Task<Photo> GetPhoto(int id);
         Task<Photo> GetMainPhoto(int userId);
+        Task<Like> GetLike(int userId, int recipientId);
     }
 }
